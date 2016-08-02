@@ -7,27 +7,23 @@
 //
 
 import UIKit
-
+import CoreData
 class ListVC: UIViewController,UITableViewDelegate,UITableViewDataSource,SMChatDelegate {
     
     @IBOutlet weak var tableView: UITableView!
     let appDel = (UIApplication.sharedApplication().delegate as? AppDelegate)
+    let context = (UIApplication.sharedApplication().delegate as? AppDelegate)?.managedObjectContext
+    var buddyIndex  = 0
     lazy var onlineBuddies:[AnyObject]?  = {
         return [AnyObject]()
     }()
     override func viewDidLoad() {
         super.viewDidLoad()
-        let a:[AnyObject]?
-        a = [AnyObject]()
-        a?.append("hello")
-        _ = (a as! [String]).indexOf("")
-
         // Do any additional setup after loading the view.
          let buddyNib = UINib(nibName: "ChatListCell", bundle: nil)
         tableView.registerNib(buddyNib, forCellReuseIdentifier: "ChatListCell")
         tableView.delegate = self
         tableView.dataSource = self
-        
         appDel?.chatDelegate = self
     }
     
@@ -36,7 +32,7 @@ class ListVC: UIViewController,UITableViewDelegate,UITableViewDataSource,SMChatD
         let login = NSUserDefaults.standardUserDefaults().objectForKey("userID")
         if let loginID = login as? String {
             print("\(loginID)")
-           appDel?.connect()
+            appDel?.connect()
         }else{
             showLogin()
         }
@@ -55,9 +51,8 @@ class ListVC: UIViewController,UITableViewDelegate,UITableViewDataSource,SMChatD
                 self.onlineBuddies!.removeAtIndex(buddy.indexOfAccessibilityElement(self.onlineBuddies!))
             }
         }
-        self.tableView.reloadData()
+       self.tableView.reloadData()
     }
-    
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -98,21 +93,4 @@ class ListVC: UIViewController,UITableViewDelegate,UITableViewDataSource,SMChatD
         chatVC.chatWithUser = onlineBuddies![indexPath.row] as? String
         self.presentViewController(chatVC, animated: true, completion: nil)
     }
-    
-    
-    
-    
-    
-    
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
 }
