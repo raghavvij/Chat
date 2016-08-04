@@ -17,5 +17,5 @@ extension DBChatHistory {
     @NSManaged var message: String?
     @NSManaged var messageID: String?
     @NSManaged var chatWithBuddy: DBBuddy?
-
+    @NSManaged var timestamp: NSDate?
 }

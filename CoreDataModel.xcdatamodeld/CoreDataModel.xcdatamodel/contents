@@ -11,6 +11,7 @@
         <attribute name="message" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="messageID" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="sender" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="timestamp" optional="YES" attributeType="Date" syncable="YES"/>
         <relationship name="chatWithBuddy" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DBBuddy" inverseName="buddyChat" inverseEntity="DBBuddy" syncable="YES"/>
     </entity>
     <entity name="DBChatInProcess" representedClassName=".DBChatInProcess" syncable="YES">
@@ -20,7 +21,7 @@
     </entity>
     <elements>
         <element name="DBBuddy" positionX="-83" positionY="-189" width="128" height="118"/>
-        <element name="DBChatHistory" positionX="-351" positionY="-189" width="128" height="103"/>
+        <element name="DBChatHistory" positionX="-351" positionY="-189" width="128" height="118"/>
         <element name="DBChatInProcess" positionX="205" positionY="-180" width="128" height="88"/>
     </elements>
 </model>

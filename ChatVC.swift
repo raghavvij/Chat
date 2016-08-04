@@ -16,9 +16,10 @@ class ChatVC: UIViewController,UITableViewDelegate,UITableViewDataSource,UITextF
     @IBOutlet weak var chatTableView: UITableView!
     var buddyIndex = 0
     var newBuddyAdded:Bool?
+    var newMessageAdded:Bool? = false
      let appDel = (UIApplication.sharedApplication().delegate as? AppDelegate)
     let context = (UIApplication.sharedApplication().delegate as? AppDelegate)?.managedObjectContext
-    var buddy:DBBuddy? = nil
+    var buddy:DBBuddy?
     lazy var messages:[[String:String?]]? = {
         return [[String:String?]]()
     }()
@@ -45,11 +46,13 @@ class ChatVC: UIViewController,UITableViewDelegate,UITableViewDataSource,UITextF
     
     @IBAction func closeChat(sender: AnyObject) {
         do {
+            if newMessageAdded == true {
             try context!.save()
             print("saved \(buddy)")
             if newBuddyAdded == true {
                 buddyIndex += 1
                 NSUserDefaults.standardUserDefaults().setInteger(buddyIndex, forKey: "buddyIndex")
+            }
             }
         }
         catch let error as NSError {
@@ -90,6 +93,7 @@ class ChatVC: UIViewController,UITableViewDelegate,UITableViewDataSource,UITextF
     
     func fetchBuddy(name:String?)  {
         let fetchRequest = NSFetchRequest(entityName: "DBBuddy")
+        let sortDesc = NSSortDescriptor(key: "timestamp", ascending: false)
         let predicate = NSPredicate(format: "firstName = %@", name!)
         fetchRequest.predicate = predicate
         do {
@@ -100,16 +104,19 @@ class ChatVC: UIViewController,UITableViewDelegate,UITableViewDataSource,UITextF
             }
             else {
                 var messageResults = results as! [NSManagedObject]
-                print("\(messageResults[0] as! DBBuddy)")
                 newBuddyAdded = false
                 buddy = (messageResults[0] as! DBBuddy)
                 let chatArray = (messageResults[0] as! DBBuddy).buddyChat
+                chatArray?.sortedArrayUsingDescriptors([sortDesc])
                 for chatMessageObject in chatArray! {
-                    print("\(chatMessageObject.isKindOfClass(DBChatHistory))")
                     let chatHistory = chatMessageObject as! DBChatHistory
-                    let dict = ["sender" : chatHistory.sender,"msg":chatHistory.message]
+                    let dict = ["sender" : chatHistory.sender,"msg":chatHistory.message,"timeStamp": "\(chatHistory.timestamp)"]
                     messages?.append(dict)
                 }
+                let df = NSDateFormatter()
+                df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+//                messages?.sortInPlace({(df.dateFromString(String(($0)["timeStamp"])))?.timeIntervalSince1970  < (df.dateFromString(String(($1)["timeStamp"])))?.timeIntervalSince1970 })
+                 messages?.sortInPlace({$0["timeStamp"]! < $1["timeStamp"]!})
                 self.chatTableView.reloadData()
             }
         }
@@ -121,39 +128,23 @@ class ChatVC: UIViewController,UITableViewDelegate,UITableViewDataSource,UITextF
     
     
     func saveBuddy(name:String?) {
-        if NSUserDefaults.standardUserDefaults().objectForKey("buddyIndex") == nil {
-            NSUserDefaults.standardUserDefaults().setInteger(buddyIndex, forKey: "buddyIndex")
-             buddy = NSEntityDescription.insertNewObjectForEntityForName("DBBuddy", inManagedObjectContext: context!) as? DBBuddy
-             buddy!.firstName = name
-             buddy!.personId = String(format:"%d",buddyIndex)
-
-        }
-        else{
-            buddyIndex = NSUserDefaults.standardUserDefaults().objectForKey("buddyIndex") as! Int
-            buddy!.firstName = name
-            buddy!.personId = String(format:"%d",buddyIndex)
-            return
+        buddy = NSEntityDescription.insertNewObjectForEntityForName("DBBuddy", inManagedObjectContext: context!) as? DBBuddy
+        buddy!.firstName = name
+        if (NSUserDefaults.standardUserDefaults().objectForKey("buddyIndex") != nil) {
+            buddy!.personId = String(format: "%d",(NSUserDefaults.standardUserDefaults().objectForKey("buddyIndex")?.intValue)!)
+        }else {
+        buddy!.personId = String(format:"%d",buddyIndex)
         }
     }
     
     func saveMessage(messageDict:[String:String?]) {
+        newMessageAdded = true
         let message = NSEntityDescription.insertNewObjectForEntityForName("DBChatHistory", inManagedObjectContext: context!) as! DBChatHistory
         message.message = messageDict["msg"]!
         message.sender = messageDict["sender"]!
-        (buddy?.buddyChat as! NSMutableSet).addObject(message)
+        message.timestamp = NSDate()
+        buddy?.mutableSetValueForKey("buddyChat").addObject(message)
     }
-    
-    
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-    
     
     // MARK: - TableView Delegates
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
